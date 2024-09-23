@@ -9,18 +9,48 @@ Institution: Leiden University
 Student number: s2653346
 """
 
+import numpy as np
 import nidaqmx as dx
 from time import sleep
 
 
 class MyDAQ():
     """A class to controll the MyDAQ"""
-    def __init__(self):
+    def __init__(self, samplerate: int):
         self.finite = dx.constants.AcquisitionType.FINITE
-        pass
+        self.__samplerate = samplerate
 
-    def readWrite(self, write_data, rate=1000, samps=None, read_channel='ai0',
-                  write_channel='ao0'):
+    @property
+    def samplerate(self) -> int:
+        return self.__samplerate
+
+    @samplerate.setter
+    def samplerate(self, new_samplerate: int) -> None:
+        assert isinstance(new_samplerate, int), "Samplerate should be an integer."
+        assert new_samplerate > 0, "Samplerate should be positive."
+        self.__samplerate = new_samplerate
+
+    @staticmethod
+    def convertDurationToSamples(samplerate: int, duration: float) -> int:
+        samples = duration * samplerate
+
+        # Round down to nearest integer
+        return int(samples)
+
+    @staticmethod
+    def convertSamplesToDuration(samplerate: int, samples: int) -> float:
+        duration = samples / samplerate
+
+        return duration
+
+    @staticmethod
+    def getTimeArray(duration: float, samplerate: int) -> np.ndarray:
+        steps = MyDAQ.convertDurationToSamples(samplerate, duration)
+        return np.linspace(1 / samplerate, duration, steps)
+
+    def readWrite(self, write_data, rate=None, samps=None, 
+                  read_channel='ai0',
+                  write_channel='ao0') -> np.ndarray:
         """Reads and writes data to the MyDAQ.
         
         parameters
@@ -28,23 +58,27 @@ class MyDAQ():
         write_data : array
             The voltage data to write to the MyDAQ
         rate : int
-            The sample rate in Hz
+            The sample rate in Hz, if None take from class attribute
         samps : int
             The number of samples to read and write. If None, all of write_data
             is written, and the length of write_data is read. If not None, the 
             length of write_data is written and repeated for the ammount of
             samples requested.
         read_channel : str
-            The channel to read from
+            The channel to read from, default is 'ai0'
         write_channel : str
-            The channel to write to
+            The channel to write to, default is 'ao0'
 
         returns
         -------
-        list
+        np.ndarray
             The data read from the MyDAQ
         """
         with dx.Task('AOTask') as writeTask, dx.Task('AITask') as readTask:
+            if rate is None:
+                rate = self.__samplerate
+                assert rate is not None, "Samplerate should be set first."
+            
             if samps is None:
                 samps = len(write_data)
             readTask.ai_channels.add_ai_voltage_chan(f'myDAQ1/{read_channel}')
@@ -59,25 +93,31 @@ class MyDAQ():
             read_data=readTask.read(number_of_samples_per_channel = samps)
             print(read_data)
             writeTask.stop()
-            return read_data
-    
-    def read(self, rate=1000, samps=1000, channel='ai0'):
+            return np.asarray(read_data)
+
+    def read(self, duration: float, rate=None, channel='ai0') -> np.ndarray:
         """Reads data from the MyDAQ.
         
         parameters
         ----------
         rate : int
-            The sample rate in Hz
-        samps : int
-            The number of samples to read
+            The sample rate in Hz, if None take from class attribute
+        duration : float
+            The duration in seconds to read data for
         channel : str
-            The channel to read from
+            The channel to read from, default is 'ai0'
         
         returns
         -------
-        list
+        np.ndarray
             The data read from the MyDAQ
         """
+        if rate is None:
+                rate = self.__samplerate
+                assert rate is not None, "Samplerate should be set first."
+        
+        samps = MyDAQ.convertDurationToSamples(rate, duration)
+
         with dx.task() as readTask:
             readTask.ai_channels.add_ai_voltage_chan(f'myDAQ1/{channel}')
 
@@ -85,9 +125,9 @@ class MyDAQ():
                                                 samps_per_chan=samps)
 
             read_data=readTask.read(number_of_samples_per_channel = samps)
-            return read_data
-        
-    def write(self, write_data, rate=1000, samps=None, channel='ao0'):
+            return np.asarray(read_data)
+
+    def write(self, write_data, rate=None, samps=None, channel='ao0') -> None:
         """Writes data to the MyDAQ.
         
         parameters
@@ -95,7 +135,7 @@ class MyDAQ():
         write_data : array
             The voltage data to write to the MyDAQ
         rate : int
-            The sample rate in Hz
+            The sample rate in Hz, if None take from class attribute
         samps : int
             The number of samples to write. If None, all of write_data
             is written. If not None, the length of write_data is written and 
@@ -104,6 +144,10 @@ class MyDAQ():
             The channel to write to
         """
         with dx.Task() as writeTask:
+            if rate is None:
+                rate = self.__samplerate
+                assert rate is not None, "Samplerate should be set first."
+            
             if samps is None:
                 samps = len(write_data)
             writeTask.ao_channels.add_ao_voltage_chan(f'myDAQ1/{channel}')
