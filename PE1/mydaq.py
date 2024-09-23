@@ -4,6 +4,9 @@ This module provides a class to control the MyDAQ. Specifically allowing the
 user to read and write data to the MyDAQ as both seperate tasks, and
 simultaneously.
 
+Parts of this code were inspired by code from Stan, provided by 
+Leiden University's PE1 course.
+
 Author: Sam Lamboo
 Institution: Leiden University
 Student number: s2653346
