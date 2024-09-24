@@ -121,7 +121,7 @@ class MyDAQ():
         
         samps = MyDAQ.convertDurationToSamples(rate, duration)
 
-        with dx.task() as readTask:
+        with dx.Task('readTask') as readTask:
             readTask.ai_channels.add_ai_voltage_chan(f'myDAQ1/{channel}')
 
             readTask.timing.cfg_samp_clk_timing(rate, sample_mode=self.finite,

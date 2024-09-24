@@ -5,10 +5,10 @@ from mydaq import MyDAQ
 def main() -> None:
     filename = input("Enter the filename of the signal to be modified: ")
     signal = remove_phase(filename)
-    np.save(filename - '.npy' + "_phase_removed", signal)
+    np.save(filename.strip('.npy') + "_phase_removed", signal)
 
     signal = remove_magnitude(filename)
-    np.save(filename - '.npy' + "_magnitude_removed", signal)
+    np.save(filename.strip('.npy') + "_magnitude_removed", signal)
 
 def remove_phase(filename: str) -> np.ndarray:
     """Remove the phase from a signal.
