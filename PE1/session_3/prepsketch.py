@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 cap = 1.5e-9
-res = 1e6
+res = 1e5
 
 f = np.logspace(0, 5, 1000)
 
