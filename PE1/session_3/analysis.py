@@ -44,7 +44,6 @@ def get_spectrum(data, frequencies, samplerate=200_000, amplitude=3):
         freq = np.fft.fftfreq(len(data[i]), 1/samplerate)
 
         fourier_norm = np.abs(fourier)/len(data[i]) * 2
-        fourier_norm = fourier_norm[:len(fourier)//2]
 
         output_amp = fourier_norm[find_nearest_idx(freq, frequency)]
         gain = 20 * np.log10(output_amp/amplitude)
