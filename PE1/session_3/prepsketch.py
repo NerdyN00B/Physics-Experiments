@@ -25,15 +25,15 @@ ax.semilogx(f, ydata, c='k', label='transfer function')
 ax.vlines(cutoff(res, cap), np.min(ydata), 0, colors='r', linestyles='dashed',
           label='Cutoff frequency')
 ax.hlines(-3, 0, np.max(f), colors='r', linestyles='dashed')
-ax.annotate(f'Cutoff frequency {cutoff(res, cap):.0f} Hz',
+ax.annotate(f'Cutoff frequency {cutoff(res, cap):.0f} $Hz$',
             xy=(cutoff(res, cap), -3),
             xytext=(-100, 20),
             textcoords='offset points',
             arrowprops=dict(facecolor='black', arrowstyle='->'))
 
 ax.set_yticks(np.append(ax.get_yticks(), -3))
-ax.set_xlabel('Frequency [Hz]')
-ax.set_ylabel('Gain [dB]')
+ax.set_xlabel('Frequency $f$ [$Hz$]')
+ax.set_ylabel('Gain [$dB$]')
 ax.set_title('transfer function for high-pass filter')
 
 ax.grid()
