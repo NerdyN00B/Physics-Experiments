@@ -15,6 +15,7 @@ Student number: s2653346
 import numpy as np
 import nidaqmx as dx
 from time import sleep
+from scipy.signal import sawtooth, square
 
 
 class MyDAQ():
@@ -158,3 +159,85 @@ class MyDAQ():
             writeTask.write(write_data, auto_start=True)
             sleep(samps/rate + 0.001)
             writeTask.stop()
+
+    @staticmethod
+    def generateWaveform(
+        function,
+        samplerate: int,
+        frequency: float,
+        amplitude: float = 1,
+        phase: float = 0,
+        duration: float = 1,
+        phaseInDegrees: bool = True,
+    ) -> np.ndarray:
+        """
+        Geneate a waveform from the 4 basic wave parameters
+
+        Parameters
+        ----------
+        function : str or callable
+            Type of waveform. The parameters `amplitude`, `frequency` and 
+            `phase` are passed to the callable.
+        samplerate: int
+            Samplerate with which to sample waveform.
+        frequency : int or float
+            Frequency of the waveform.
+        amplitude : int or float, optional
+            Amplitude of the waveform in volts. The default is 1.
+        phase : int or float, optional
+            Phase of the waveform. The default is 0. In degrees if
+            faseinDegrees is True. Otherwise in radians.
+        duration : int or float, optional
+            Duration of the waveform in seconds. The default is 1.
+        phaseInDegrees: bool, optional
+            Whether phase is given in degrees. The default is True.
+
+        Returns
+        -------
+        timeArray : ndarray
+            ndarray containing the discrete times at which the waveform is evaluated.
+        wave : ndarray
+            ndarray of the evaluated waveform.
+
+        """
+        timeArray = MyDAQ.getTimeArray(duration, samplerate)
+        if phaseInDegrees:
+            phase = np.deg2rad(phase)
+
+        if not callable(function):
+            function = MyDAQ.findFunction(function)
+
+        wave = function(timeArray, amplitude, frequency, phase)
+
+        return timeArray, wave
+
+    @staticmethod
+    def findFunction(function: str):
+        """Find a function to generate simple continuous waveforms.
+
+        parameters
+        ----------
+        function : str
+            The name of the function to generate
+
+        returns
+        -------
+        function : function
+            The function corresponding to the name.
+        """
+        if function == "sine":
+            return lambda x, A, f, p: A * np.sin(2 * np.pi * f * x + p)
+        if function == "cosine":
+            return lambda x, A, f, p: A * np.cos(2 * np.pi * f * x + p)
+        elif function == "square":
+            return lambda x, A, f, p: A * square(2 * np.pi * f * x + p)
+        elif function == "sawtooth":
+            return lambda x, A, f, p: A * sawtooth(2 * np.pi * f * x + p)
+        elif function == "isawtooth":
+            return lambda x, A, f, p: A * sawtooth(2 * np.pi * f * x + p,
+                                                   width=0)
+        elif function == "triangle":
+            return lambda x, A, f, p: A * sawtooth(2 * np.pi * f * x + p,
+                                                   width=0.5)
+        else:
+            raise ValueError(f"{function} is not a recognized wavefront form")
