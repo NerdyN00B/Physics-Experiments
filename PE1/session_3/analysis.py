@@ -127,6 +127,7 @@ def fit(ax, frequencies, spectrum, cap, res):
 if __name__ == "__main__":
     cap = 1.5e-9 # F
     res = 1e5 # Ohm
+    samplerate = 200_000
 
     root = tk.Tk()
     root.withdraw()
@@ -138,6 +139,7 @@ if __name__ == "__main__":
                                            title='Select data file',
                                            )
     data = np.load(file_path)
+    data = data[:,:-samplerate//10] # remove last 100 ms of data because of readwrite desync
     frequencies = np.load(file_path.replace('.npy', '_frequencies.npy'))
 
     spectrum = get_spectrum(data, frequencies)

@@ -44,6 +44,8 @@ for frequency in frequencies:
 np.save(savefile, np.asarray(data))
 np.save(savefile.replace('.npy', '_frequencies.npy'), frequencies)
 
+data = data[:,:-samplerate//10] # remove last 100 ms of data because of readwrite desync
+
 spectrum = an.get_spectrum(data, frequencies)
 np.save(savefile.replace('.npy', '_spectrum.npy'), spectrum)
 
