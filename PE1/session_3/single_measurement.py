@@ -26,15 +26,16 @@ savefile = filedialog.asksaveasfilename(filetypes=[('Numpy files', '.npy')],
                                          confirmoverwrite=True,
                                          )
 
-daq = md.MyDAQ(samplerate)
+daq = md.MyDAQ(samplerate, 'myDAQ2')
 
-waveform = md.generateWaveform('sine',
+time, waveform = daq.generateWaveform('sine',
                                samplerate=daq.samplerate,
                                frequency=frequency,
                                amplitude=amplitude,
                                duration=duration)
 
 data = daq.readWrite(waveform)
+data = data[:-samplerate//10]
 
 np.save(savefile, data)
 

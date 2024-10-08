@@ -8,7 +8,7 @@ import analysis as an
 
 samplerate = 200_000
 duration = 1 # s
-ammount = 1000 # number of measured frequencies in logspace from 10 to 10000 Hz
+ammount = 100 # number of measured frequencies in logspace from 10 to 10000 Hz
 amplitude = 3 # V
 
 cap = 1.5e-9 # F
@@ -29,11 +29,11 @@ savefile = filedialog.asksaveasfilename(filetypes=[('Numpy files', '.npy')],
                                          confirmoverwrite=True,
                                          )
 
-daq = md.MyDAQ(samplerate)
+daq = md.MyDAQ(samplerate, 'myDAQ2')
 
 data = []
 for frequency in frequencies:
-    waveform = md.generateWaveform('sine',
+    time, waveform = daq.generateWaveform('sine',
                                 samplerate=daq.samplerate,
                                 frequency=frequency,
                                 amplitude=amplitude,
@@ -43,6 +43,8 @@ for frequency in frequencies:
 
 np.save(savefile, np.asarray(data))
 np.save(savefile.replace('.npy', '_frequencies.npy'), frequencies)
+
+data = np.asarray(data)
 
 data = data[:,:-samplerate//10] # remove last 100 ms of data because of readwrite desync
 

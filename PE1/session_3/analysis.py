@@ -1,5 +1,5 @@
 import numpy as np
-import mydaq as md
+from mydaq import MyDAQ as md
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 # filesave dialog
@@ -14,8 +14,12 @@ def transfer_function(frequency, cap, res):
     x_c= 1 / (2 * np.pi * frequency * cap)
     return res / np.sqrt(res**2 + x_c**2)
 
+def db_transfer_function(frequency, cap, res):
+    x_c= 1 / (2 * np.pi * frequency * cap)
+    return 20*np.log10(res / np.sqrt(res**2 + x_c**2))
+
 def MSD(spectrum, frequencies, cap, res):
-    return np.mean((transfer_function(frequencies, cap, res) - spectrum)**2)    
+    return np.mean((20*np.log10(transfer_function(frequencies, cap, res)) - spectrum)**2)    
 
 def get_spectrum(data, frequencies, samplerate=200_000, amplitude=3):
     """
@@ -44,8 +48,11 @@ def get_spectrum(data, frequencies, samplerate=200_000, amplitude=3):
         freq = np.fft.fftfreq(len(data[i]), 1/samplerate)
 
         fourier_norm = np.abs(fourier)/len(data[i]) * 2
+        idx = find_nearest_idx(freq, frequency)
+        deviation = 3
 
-        output_amp = fourier_norm[find_nearest_idx(freq, frequency)]
+        output_amp = np.trapz(fourier_norm[idx-deviation:idx+deviation],
+                              freq[idx-deviation:idx+deviation])
         gain = 20 * np.log10(output_amp/amplitude)
         spectrum.append(gain)
     return np.asarray(spectrum)
@@ -106,7 +113,7 @@ def plot_spectrum(spectrum, frequencies, cap, res, theoretical=True):
     return fig, ax
 
 def fit(ax, frequencies, spectrum, cap, res):
-    popt, pcov = curve_fit(transfer_function,
+    popt, pcov = curve_fit(db_transfer_function,
                            frequencies,
                            spectrum,
                            p0=[cap, res])
@@ -147,7 +154,7 @@ if __name__ == "__main__":
     popt, pcov = fit(ax, frequencies, spectrum, cap, res)
     ax.legend()
     fig.savefig(file_path.replace('.npy', '_spectrum.pdf'))
-    fig.show()
+    plt.show()
 
     error = np.sqrt(np.diag(pcov))
     print(f'Capacitance: {popt[0]:.2e} F +/- {error[0]:.2e} F')
