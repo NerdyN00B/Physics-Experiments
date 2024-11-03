@@ -20,10 +20,10 @@ from scipy.signal import sawtooth, square
 
 class MyDAQ():
     """A class to controll the MyDAQ"""
-    def __init__(self, samplerate: int, name='myDAQ2'):
+    def __init__(self, samplerate: int, name: str='myDAQ2'):
         self.finite = dx.constants.AcquisitionType.FINITE
         self.__samplerate = samplerate
-        self.name = name
+        self.__name = name
 
     @property
     def samplerate(self) -> int:
@@ -34,6 +34,15 @@ class MyDAQ():
         assert isinstance(new_samplerate, int), "Samplerate should be an integer."
         assert new_samplerate > 0, "Samplerate should be positive."
         self.__samplerate = new_samplerate
+    
+    @property
+    def name(self) -> str:
+        return self.__name
+    
+    @name.setter
+    def name(self, new_name: str) -> None:
+        assert isinstance(new_name, str), "Name should be a string."
+        self.__name = new_name
 
     @staticmethod
     def convertDurationToSamples(samplerate: int, duration: float) -> int:
@@ -52,10 +61,81 @@ class MyDAQ():
     def getTimeArray(duration: float, samplerate: int) -> np.ndarray:
         steps = MyDAQ.convertDurationToSamples(samplerate, duration)
         return np.linspace(1 / samplerate, duration, steps)
+    
+    def _addOutputChannels(self, 
+                           task: dx.task.Task, 
+                           channels: str | list[str]
+                           ) -> None:
+        """Add output channels to the DAQ
+        
+        parameters
+        ----------
+        task : dx.task.Task
+            The task to add the channels to
+        channels : str | list[str]
+            The channels to add to the task
+        """
+        assert not (self.name is None), "Name should be set first."
+
+        # Make sure channels can be iterated over
+        if isinstance(channels, str):
+            channels = [channels]
+
+        # Iterate over all channels and add to task
+        for channel in channels:
+            if self.name in channel:
+                task.ao_channels.add_ao_voltage_chan(channel)
+            else:
+                task.ao_channels.add_ao_voltage_chan(f"{self.name}/{channel}")
+
+    def _addInputChannels(self, 
+                          task: dx.task.Task, 
+                          channels: str | list[str]
+                          ) -> None:
+        """Add input channels to the DAQ
+        
+        parameters
+        ----------
+        task : dx.task.Task
+            The task to add the channels to
+        channels : str | list[str]
+            The channels to add to the task
+        """
+        assert not (self.name is None), "Name should be set first."
+
+        # Make sure channels can be iterated over
+        if isinstance(channels, str):
+            channels = [channels]
+
+        # Iterate over all channels and add to task
+        for channel in channels:
+            if self.name in channel:
+                task.ai_channels.add_ai_voltage_chan(channel)
+            else:
+                task.ai_channels.add_ai_voltage_chan(f"{self.name}/{channel}")
+
+    def _configureChannelTimings(self, task: dx.task.Task, samples: int) -> None:
+        """Set the correct timings for task based on number of samples
+        
+        parameters
+        ----------
+        task : dx.task.Task
+            The task to set the timing for
+        samples : int
+            The number of samples to read or write
+        """
+        assert not (self.samplerate is None), "Samplerate should be set first."
+
+        task.timing.cfg_samp_clk_timing(
+            self.samplerate,
+            sample_mode=self.finite,
+            samps_per_chan=samples,
+        )
 
     def readWrite(self, write_data, rate=None, samps=None, 
-                  read_channel='ai0',
-                  write_channel='ao0') -> np.ndarray:
+                  read_channel: str|list[str] ='ai0',
+                  write_channel: str|list[str] ='ao0'
+                  ) -> np.ndarray:
         """Reads and writes data to the MyDAQ.
         
         parameters
@@ -81,21 +161,28 @@ class MyDAQ():
         """
         with dx.Task('AOTask') as writeTask, dx.Task('AITask') as readTask:
             if rate is None:
-                rate = self.__samplerate
+                rate = self.samplerate
                 assert rate is not None, "Samplerate should be set first."
             
             if samps is None:
                 samps = len(write_data)
-            readTask.ai_channels.add_ai_voltage_chan(f'{self.name}/{read_channel}')
-            writeTask.ao_channels.add_ao_voltage_chan(f'{self.name}/{write_channel}')
+            
+            self._addOutputChannels(writeTask, write_channel)
+            self._addInputChannels(readTask, read_channel)
+            
+            # readTask.ai_channels.add_ai_voltage_chan(f'{self.name}/{read_channel}')
+            # writeTask.ao_channels.add_ao_voltage_chan(f'{self.name}/{write_channel}')
 
-            readTask.timing.cfg_samp_clk_timing(rate, sample_mode=self.finite,
-                                                samps_per_chan=samps)
-            writeTask.timing.cfg_samp_clk_timing(rate, sample_mode=self.finite,
-                                                samps_per_chan=samps)
+            self._configureChannelTimings(readTask, samps)
+            self._configureChannelTimings(writeTask, samps)
+            # readTask.timing.cfg_samp_clk_timing(rate, sample_mode=self.finite,
+            #                                     samps_per_chan=samps)
+            # writeTask.timing.cfg_samp_clk_timing(rate, sample_mode=self.finite,
+            #                                     samps_per_chan=samps)
 
             writeTask.write(write_data, auto_start=True)
-            read_data=readTask.read(number_of_samples_per_channel = samps)
+            read_data = readTask.read(number_of_samples_per_channel = samps)
+            
             writeTask.stop()
             return np.asarray(read_data)
 
@@ -117,7 +204,7 @@ class MyDAQ():
             The data read from the MyDAQ
         """
         if rate is None:
-                rate = self.__samplerate
+                rate = self.samplerate
                 assert rate is not None, "Samplerate should be set first."
         
         samps = MyDAQ.convertDurationToSamples(rate, duration)
@@ -149,7 +236,7 @@ class MyDAQ():
         """
         with dx.Task() as writeTask:
             if rate is None:
-                rate = self.__samplerate
+                rate = self.samplerate
                 assert rate is not None, "Samplerate should be set first."
             
             if samps is None:

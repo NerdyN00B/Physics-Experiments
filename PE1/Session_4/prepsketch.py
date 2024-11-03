@@ -95,4 +95,4 @@ ax3.text(0.1, 1, '(c)', transform=ax3.transAxes,
          va='top', 
          ha='right')
 
-fig.savefig('PE1/session_4/highpass.pdf')
+fig.savefig('PE1/session_4/figures/highpass.pdf')
