@@ -67,6 +67,20 @@ def gain_plotter(ax, frequencies, gain, gain_error, rescap, rescap_error):
             c='r',
             linestyle='dashed',
             )
+    
+    ax.hlines(-3,
+              frequencies[0], frequencies[-1],
+              label='-3 dB',
+              linestyle='dotted',
+              color='b',
+              )
+    ax.vlines(cutoff(1, rescap),
+                np.min(gain), 0,
+                label='cutoff frequency of fit',
+                linestyle='dotted',
+                color='b',
+                )
+    
     ax.set_xscale('log')
     ax.set_ylabel('Gain [dB]')
     ax.set_xlabel('Frequency [Hz]')
@@ -86,6 +100,20 @@ def phase_plotter(ax, frequencies, phase, phase_error, rescap, rescap_error):
             c='r',
             linestyle='dashed',
             )
+    
+    ax.hlines(45,
+              frequencies[0], frequencies[-1],
+              label='$45^{\circ}$',
+              linestyle='dotted',
+              color='b',
+              )
+    ax.vlines(cutoff(1, rescap),
+                0, 90,
+                label='cutoff frequency of fit',
+                linestyle='dotted',
+                color='b',
+                )
+    
     ax.set_xscale('log')
     ax.set_ylabel('Phase [°]')
     ax.set_xlabel('Frequency [Hz]')
