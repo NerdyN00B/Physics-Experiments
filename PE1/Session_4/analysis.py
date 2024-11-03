@@ -108,17 +108,22 @@ def main():
                                             title='Select data file',
                                             )
     
+    # Load the data
     frequencies = np.load(file_path.replace('.npy', '_frequencies.npy'))
     
-    data_in = []
-    data_out = []
+    # Load first measurement
+    data = np.load(file_path)
+    data_in = [data[0,:,:-samplerate//10]]
+    data_out = [data[1,:,:-samplerate//10]]
+    # Load the rest of the measurements
     for i in range(repeat):
-        data = np.load(file_path)
+        data = np.load(file_path.replace('.npy', f'_{i}.npy'))
         
         data_in.append(data[0,:,:-samplerate//10]) # remove last 100 ms of data because of readwrite desync
         data_out.append(data[1,:,:-samplerate//10]) # remove last 100 ms of data because of readwrite desync
     
     # Get the transfer function and calculate phase, magniotude and gain
+    # for each measurement calculate the mean and std.
     full_transfer = get_transfer(data_in, data_out, frequencies)
     full_magnitude = np.abs(full_transfer)
     mean_magnitude = np.mean(full_magnitude, axis=0)
