@@ -1,19 +1,20 @@
 import numpy as np
-import PE1.mydaq as md
+import mydaq as md
 import matplotlib.pyplot as plt
 
 def find_nearest_idx(a, value):
     return (np.abs(a - value)).argmin()
 
 samplerate = 200_000
-duration = 1 # s
+duration = 10 # s
 amplitude = 3 # V
-frequency = 1000 # Hz
+frequency = 10 # Hz
 
-cap = 1.5e-9 # F
-res = 1e5 # Ohm
+cap = 1.5e-6 # F
+res = 1e3 # Ohm
 
-daq = md.MyDAQ(samplerate, 'myDAQ2')
+daq = md.MyDAQ(samplerate, 'myDAQ3')
+# daq2 = md.MyDAQ(samplerate, 'myDAQ3')
 
 time, waveform = daq.generateWaveform('sine',
                                 samplerate=daq.samplerate,
@@ -22,6 +23,7 @@ time, waveform = daq.generateWaveform('sine',
                                 duration=duration
                                 )
 
+# daq.write(waveform)
 read = (daq.readWrite(waveform, read_channel=["ai0", "ai1"]))
 
 data_in = read[0]

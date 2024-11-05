@@ -64,7 +64,7 @@ class MyDAQ():
     
     def _addOutputChannels(self, 
                            task: dx.task.Task, 
-                           channels: str | list[str]
+                           channels
                            ) -> None:
         """Add output channels to the DAQ
         
@@ -90,7 +90,7 @@ class MyDAQ():
 
     def _addInputChannels(self, 
                           task: dx.task.Task, 
-                          channels: str | list[str]
+                          channels
                           ) -> None:
         """Add input channels to the DAQ
         
@@ -133,8 +133,8 @@ class MyDAQ():
         )
 
     def readWrite(self, write_data, rate=None, samps=None, 
-                  read_channel: str|list[str] ='ai0',
-                  write_channel: str|list[str] ='ao0'
+                  read_channel='ai0',
+                  write_channel='ao0'
                   ) -> np.ndarray:
         """Reads and writes data to the MyDAQ.
         
@@ -215,7 +215,7 @@ class MyDAQ():
             readTask.timing.cfg_samp_clk_timing(rate, sample_mode=self.finite,
                                                 samps_per_chan=samps)
 
-            read_data=readTask.read(number_of_samples_per_channel = samps)
+            read_data = readTask.read(number_of_samples_per_channel = samps)
             return np.asarray(read_data)
 
     def write(self, write_data, rate=None, samps=None, channel='ao0') -> None:

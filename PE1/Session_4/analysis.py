@@ -38,10 +38,10 @@ def get_transfer(data_in,
     full_transfer = []
     for i in range(len(data_in)):
         transfer_function = []
-        for i, frequency in enumerate(frequencies):
-            fourier_in = np.fft.fft(data_in[i])
-            fourier_out = np.fft.fft(data_out[i])
-            freq = np.fft.fftfreq(len(data_in[i]), 1/samplerate)
+        for j, frequency in enumerate(frequencies):
+            fourier_in = np.fft.fft(data_in[i][j])
+            fourier_out = np.fft.fft(data_out[i][j])
+            freq = np.fft.fftfreq(len(data_in[i][j]), 1/samplerate)
             
             idx = find_nearest_idx(freq, frequency)
             integrated_in = np.trapz(fourier_in[idx-integration_range:idx+integration_range],
@@ -59,8 +59,10 @@ def gain_plotter(ax, frequencies, gain, gain_error, rescap, rescap_error):
     ax.errorbar(frequencies,
                 gain,
                 yerr=2*gain_error,
-                fmt='ko', 
-                label='mean gain $\pm 2\sigma$',)
+                fmt='k.', 
+                label='mean gain $\pm 2\sigma$',
+                capsize=2
+                )
     ax.plot(frequencies,
             gain_function(frequencies, rescap),
             label=f'fitted gain RC = ({rescap:.2e} $\pm$ {rescap_error:.2e} )$\Omega \cdot F$',
@@ -91,8 +93,9 @@ def phase_plotter(ax, frequencies, phase, phase_error, rescap, rescap_error):
     ax.errorbar(frequencies,
                 phase,
                 yerr=2*phase_error,
-                fmt='ko',
+                fmt='k.',
                 label='mean phase $\pm 2\sigma$',
+                capsize=2,
                 )
     ax.plot(frequencies,
             phase_function(frequencies, rescap),
@@ -121,15 +124,15 @@ def phase_plotter(ax, frequencies, phase, phase_error, rescap, rescap_error):
     ax.legend()
 
 def main():
-    cap = 1.5e-9 # F
-    res = 1e5 # Ohm
+    cap = 1.5e-6 # F
+    res = 31e5 # Ohm
     samplerate = 200_000
     repeat = 4
 
     root = tk.Tk()
     root.withdraw()
 
-    dir = os.getcwd() + '/PE1/session_3'
+    dir = os.getcwd() + '/PE1/Session_4'
 
     file_path = filedialog.askopenfilename(filetypes=[('Numpy files', '.npy')],
                                             initialdir=dir,
@@ -140,19 +143,23 @@ def main():
     frequencies = np.load(file_path.replace('.npy', '_frequencies.npy'))
     
     # Load first measurement
-    data = np.load(file_path)
-    data_in = [data[0,:,:-samplerate//10]]
-    data_out = [data[1,:,:-samplerate//10]]
+    
     # Load the rest of the measurements
     for i in range(repeat):
-        data = np.load(file_path.replace('.npy', f'_{i}.npy'))
-        
-        data_in.append(data[0,:,:-samplerate//10]) # remove last 100 ms of data because of readwrite desync
-        data_out.append(data[1,:,:-samplerate//10]) # remove last 100 ms of data because of readwrite desync
+        if i == 0:
+            data = np.load(file_path)
+            data_in = [data[0,:,:-samplerate//10]]
+            data_out = [data[1,:,:-samplerate//10]]
+        else:
+            data = np.load(file_path.replace('.npy', f'_{i}.npy'))
+            
+            data_in.append(data[0,:,:-samplerate//10]) # remove last 100 ms of data because of readwrite desync
+            data_out.append(data[1,:,:-samplerate//10]) # remove last 100 ms of data because of readwrite desync
     
     # Get the transfer function and calculate phase, magniotude and gain
     # for each measurement calculate the mean and std.
     full_transfer = get_transfer(data_in, data_out, frequencies)
+    # print(full_transfer.shape)
     full_magnitude = np.abs(full_transfer)
     mean_magnitude = np.mean(full_magnitude, axis=0)
     full_gain = 20 * np.log10(full_magnitude)
@@ -183,6 +190,10 @@ def main():
                                        )
     phase_rescap = phase_popt[0]
     phase_rescap_error = np.sqrt(np.diag(phase_pcov))[0]
+    # gain_rescap = 1
+    # gain_rescap_error = 1
+    # phase_rescap = 1
+    # phase_rescap_error = 1
     
     # Plot the data
     fig = plt.figure(dpi=300, layout='tight', figsize=(16, 9))
@@ -226,7 +237,7 @@ def main():
     )
     
     # Polar plot
-    polar_ax.plot(mean_phase, mean_magnitude, 'ko')
+    polar_ax.plot(np.deg2rad(mean_phase), mean_magnitude, color='k', marker='o')
     polar_ax.set_title('Polar plot of transfer function')
     polar_ax.text(
         0.1, 1,
@@ -237,6 +248,8 @@ def main():
         va='top',
         ha='right',
     )
+    
+    fig.savefig(file_path.replace('.npy', '_analysis.pdf'))
 
 if __name__ == "__main__":
     main()

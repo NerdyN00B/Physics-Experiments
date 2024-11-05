@@ -1,5 +1,5 @@
 import numpy as np
-import PE1.mydaq as md
+import mydaq as md
 # filesave dialog
 import tkinter as tk
 from tkinter import filedialog
@@ -7,12 +7,12 @@ import os
 
 samplerate = 200_000
 duration = 1 # s
-ammount = 15 # number of measured frequencies in logspace from 10 to 10000 Hz
+ammount = 25 # number of measured frequencies in logspace from 10 to 10000 Hz
 amplitude = 3 # V
-extra_points = 10 # number of extra points arround the frequency of interest
+extra_points = 0 # number of extra points arround the frequency of interest
 repeat = 4 # number of times to repeat the measurement
 
-foi = 1061 # Hz - frequency of interest
+foi = 160 # Hz - frequency of interest
 
 frequencies = np.logspace(1, 4, ammount) # Hz
 
@@ -22,7 +22,7 @@ if extra_points > 0:
     frequencies = np.sort(frequencies)
 
 dir = os.getcwd()
-dir += '/PE1/session_3'
+dir += '/PE1/Session_4'
 
 root = tk.Tk()
 root.withdraw()
@@ -34,7 +34,7 @@ savefile = filedialog.asksaveasfilename(filetypes=[('Numpy files', '.npy')],
                                          confirmoverwrite=True,
                                          )
 
-daq = md.MyDAQ(samplerate, 'myDAQ2')
+daq = md.MyDAQ(samplerate, 'myDAQ3')
 
 for i in range(repeat):
     data_in = []
