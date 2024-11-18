@@ -24,13 +24,16 @@ def transfer_function(omega, res, cap, ind):
 def natural(cap, ind):
     return 1 / np.sqrt(cap * ind) / (2 * np.pi)
 
+def q_factor(res, cap, ind):
+    return 1/res * np.sqrt(ind/cap)
+
+print(f'Natural frequency: {natural(cap, ind)}')
+print(f'Q factor: {q_factor(res, cap, ind)}')
 
 fig = plt.figure(dpi=300, layout='tight', figsize=(16, 9))
 
 gs = gridspec.GridSpec(4, 2, figure=fig)
 ax = fig.add_subplot(gs[:2, 0])
-
-print(f'Natural frequency: {natural(cap, ind)}')
 
 output_signal = transfer_function(omega, res, cap, ind)
 
@@ -38,10 +41,11 @@ magnitude = 20*np.log10(np.abs(output_signal))
 
 ax.semilogx(f, magnitude, c='k', label='transfer function')
 
-ax.vlines(natural(cap=cap, ind=ind), np.min(magnitude), np.max(magnitude), colors='r', linestyles='dashed',
+ax.vlines(natural(cap=cap, ind=ind), np.min(magnitude), np.max(magnitude),
+          colors='r', linestyles='dashed',
           label='Resonance frequency')
 # ax.hlines(np.max(magnitude), 0, np.max(f), colors='r', linestyles='dashed')
-ax.annotate(f'Natural frequency {natural(cap=cap, ind=ind):.0f} $Hz$',
+ax.annotate(f'Resonant frequency {natural(cap=cap, ind=ind):.0f} $Hz$',
             xy=(natural(cap=cap, ind=ind), np.max(magnitude)),
             xytext=(50, -20),
             textcoords='offset points',
@@ -51,6 +55,19 @@ ax.annotate(f'Natural frequency {natural(cap=cap, ind=ind):.0f} $Hz$',
 ax.set_xlabel('Frequency $f$ [$Hz$]')
 ax.set_ylabel('Gain [$dB$]')
 ax.set_title('magnitude transfer function for high-pass filter')
+
+axins = ax.inset_axes(
+    [0.1, 0.1, 0.3, 0.5],
+    transform=ax.transAxes,
+    xlim=(natural(cap=cap, ind=ind)-1400, natural(cap=cap, ind=ind)+1400),
+    ylim=(-3, max(magnitude)+3),)
+
+axins.semilogx(f, magnitude, c='k')
+axins.vlines(natural(cap=cap,ind=ind), np.min(magnitude), np.max(magnitude),
+             colors='r', linestyles='dashed')
+
+ax.indicate_inset_zoom(axins)
+
 
 ax.text(-0.01, 1.1, '(a)', transform=ax.transAxes, 
         fontsize=16, 
@@ -103,4 +120,5 @@ ax3.text(0.1, 1, '(c)', transform=ax3.transAxes,
          va='top', 
          ha='right')
 
-fig.savefig('PE1/session_5/figures/highpass.pdf')
+fig.savefig('PE1/session_5/figures/LRC_resonator.pdf')
+fig.savefig('PE1/session_5/figures/LRC_resonator.png')
