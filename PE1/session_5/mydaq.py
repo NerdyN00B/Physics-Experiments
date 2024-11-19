@@ -249,7 +249,7 @@ class MyDAQ():
             writeTask.stop()
     
     def measure_spectrum(self,
-                         frequencies: list[int]|np.ndarray,
+                         frequencies,
                          duration: float =1,
                          amplitude: float =3,
                          repeat: int =1,
@@ -322,10 +322,64 @@ class MyDAQ():
             return np.stack((np.asarray(input_data),
                              np.asarray(output_data)))
 
+    # def white_noise_measure(self,
+    #                         frequencies,
+    #                         duration=10,
+    #                         amplitude=3,
+    #                         repeat=3,
+    #                         write_channel='ao0',
+    #                         read_input_channel='ai0',
+    #                         read_output_channel='ai1',
+    #                         ):
+    #     assert isinstance(repeat, int), "repeat must be integer"
+    #     assert repeat > 0, "repeat must be positive integer"
+    #     signal = np.zeros(duration*self.samplerate)
+    #     for frequency in frequencies:
+    #         waveform = self.generateWaveform('sine',
+    #                                          self.samplerate,
+    #                                          frequency,
+    #                                          amplitude,
+    #                                          duration=duration
+    #                                          )[1]
+    #         signal += waveform
+    #     signal /= np.max(signal)
+    #     signal *= amplitude
+    #     input_data = []
+    #     output_data = []
+    #     for i in range(repeat):
+    #         read = self.readWrite(signal,
+    #                               read_channel=[read_input_channel,
+    #                                             read_output_channel],
+    #                               write_channel=write_channel
+    #                               )
+    #         input_data.append(read[0])
+    #         output_data.append(read[1])
+    #     if repeat == 1:
+    #         return read
+    #     else:
+    #         return np.stack((input_data, output_data))
+        
+    # @staticmethod
+    # def get_whitenoise_spectrum(data, frequencies, repeat, samplerate=200_000,
+    #                             integration_range=1):
+    #     for i in range(repeat):
+    #         fourier_in = np.fft.fftfreq(data[0][i])
+    #         fourier_out = np.fft.fftfreq(data[1][i])
+    #         freq = np.fft.fftfreq(len(data[0][i]), 1/samplerate)
+    #         for frequency in frequencies:
+    #             idx = MyDAQ.find_nearest_idx(freq, frequency)
+    #             integrated_in = np.trapz(fourier_in[idx-integration_range:idx+integration_range],
+    #                                     freq[idx-integration_range:idx+integration_range])
+                
+    #             integrated_out = np.trapz(fourier_out[idx-integration_range:idx+integration_range],
+    #                                     freq[idx-integration_range:idx+integration_range])
+                
+    #             transfer 
+
     @staticmethod
     def get_transfer_functions(
         data: np.ndarray,
-        frequencies: list[int]|np.ndarray,
+        frequencies,
         repeat: int = 1,
         samplerate: int = 200_000,
         integration_range: int = 5,
@@ -360,14 +414,20 @@ class MyDAQ():
             for j, frequency in enumerate(frequencies):
                 fourier_in = np.fft.fft(data[0][i][j])
                 fourier_out = np.fft.fft(data[1][i][j])
-                freq = np.fft.fftfreq(len(data[0][j]), 1/samplerate)
+                freq = np.fft.fftfreq(len(data[0][i][j]), 1/samplerate)
                 
-                idx = MyDAQ.find_nearest_idx(freq, frequency)
-                integrated_in = np.trapz(fourier_in[idx-integration_range:idx+integration_range],
-                                        freq[idx-integration_range:idx+integration_range])
-                
-                integrated_out = np.trapz(fourier_out[idx-integration_range:idx+integration_range],
-                                        freq[idx-integration_range:idx+integration_range])
+                if integration_range == 0:
+                    idx = MyDAQ.find_nearest_idx(freq, frequency)
+                    transfer = fourier_out[idx] / fourier_in[idx]
+                    transfer_function.append(transfer)
+                    continue
+                else:
+                    idx = MyDAQ.find_nearest_idx(freq, frequency)
+                    integrated_in = np.trapz(fourier_in[idx-integration_range:idx+integration_range],
+                                            freq[idx-integration_range:idx+integration_range])
+                    
+                    integrated_out = np.trapz(fourier_out[idx-integration_range:idx+integration_range],
+                                            freq[idx-integration_range:idx+integration_range])
                 
                 transfer = integrated_out / integrated_in
                 
@@ -381,14 +441,14 @@ class MyDAQ():
             return np.asarray(full_transfer)
         
     @staticmethod
-    def analyse_transfer(transfer_functions: np.ndarray, gain=True):
+    def analyse_transfer(transfer_functions: np.ndarray, isgain=True):
         """Analyse the transfer functions of a system.
         
         parameters
         ----------
         transfer_functions : np.ndarray
             The transfer functions of the system
-        gain : bool
+        isgain : bool
             Whether to analyse the gain or the magnitude
         
         returns
@@ -396,7 +456,8 @@ class MyDAQ():
         mean_gain/magnitude : np.ndarray
             The mean gain/magnitude of the transfer functions
         std_gain/magnitude : np.ndarray
-            The standard deviation of the gain/magnitude of the transfer functions
+            The standard deviation of the gain/magnitude of the transfer
+            functions
         mean_phase : np.ndarray
             The mean phase of the transfer functions in radians
         std_phase : np.ndarray
@@ -416,13 +477,13 @@ class MyDAQ():
         mean_phase = np.mean(phase, axis=0)
         std_phase = np.std(phase, axis=0)
         
-        if gain:
+        if isgain:
             return mean_gain, std_gain, mean_phase, std_phase
         else:
             return mean_magnitude, std_magnitude, mean_phase, std_phase
     
     @staticmethod
-    def make_bodeplot(**kwargs):
+    def make_bode_plot(**kwargs):
         """Create a bodeplot figure.
         
         parameters
@@ -527,7 +588,8 @@ class MyDAQ():
                    gain: np.ndarray,
                    phase: np.ndarray,
                    magnitude=False,
-                   ):
+                   color = 'k',
+                   **kwargs):
         """Make polar plot of transfer function.
         
         if magnitude is True, gain is interpreted as magnitude. Otherwise gain
@@ -538,8 +600,12 @@ class MyDAQ():
         else: 
             magnitude = gain
         
-        ax.plot(phase, magnitude)
+        ax.scatter(phase, magnitude, color=color, **kwargs)
         ax.set_title('Polar plot of transfer function')
+    
+    @staticmethod
+    def find_nearest_idx(a, value):
+        return (np.abs(a - value)).argmin()
 
     @staticmethod
     def generateWaveform(

@@ -4,8 +4,8 @@ import matplotlib.gridspec as gridspec
 
 
 
-cap = 50e-9
-res = 500
+cap = 100e-9
+res = 425
 ind = 100e-3
 
 f = np.logspace(1.5, 5, 10000)

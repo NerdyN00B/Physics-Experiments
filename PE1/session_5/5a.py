@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-from mydaq import MyDaq
+from mydaq import MyDAQ as MyDaq
 import tkinter as tk
 from tkinter import filedialog
 import os

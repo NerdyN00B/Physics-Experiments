@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-from mydaq import MyDaq
+from mydaq import MyDAQ as MyDaq
 import tkinter as tk
 from tkinter import filedialog
 import os
@@ -22,11 +22,11 @@ savefile = filedialog.asksaveasfilename(filetypes=[('Numpy files', '.npy')],
 
 ## Start of the measurement code
 
-repeat = 5
+repeat = 3
 
 daq = MyDaq(200_000, 'myDAQ2')
 
-frequencies = np.logspace(1, 4, 25)
+frequencies = np.logspace(1, 4.5, 50)
 
 data = daq.measure_spectrum(frequencies,
                             duration=1,
@@ -43,7 +43,7 @@ full_transfer = daq.get_transfer_functions(data,
                                            frequencies,
                                            repeat=repeat,
                                            samplerate=daq.samplerate,
-                                           integration_range=5,
+                                           integration_range=1,
                                            )
 
 mean_gain, std_gain, mean_phase, std_phase = daq.analyse_transfer(full_transfer)
