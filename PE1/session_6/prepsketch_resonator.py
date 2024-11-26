@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 
-omega_0 = 2
-q_factor = 2
+omega_0 = 1*np.pi*2
+q_factor = 10
 
-f = np.logspace(1.5, 5, 10000)
+f = np.logspace(-0.5, 1, 10000)
 omega = f * 2 * np.pi
 
 def transfer_function(omega, omega_0, q_factor):
@@ -24,12 +24,12 @@ magnitude = 20*np.log10(np.abs(output_signal))
 
 ax.semilogx(f, magnitude, c='k', label='transfer function')
 
-ax.vlines(omega_0, np.min(magnitude), np.max(magnitude),
+ax.vlines(omega_0/2/np.pi, np.min(magnitude), np.max(magnitude),
           colors='r', linestyles='dashed',
           label='Resonance frequency')
 # ax.hlines(np.max(magnitude), 0, np.max(f), colors='r', linestyles='dashed')
-ax.annotate(f'Resonant frequency {omega_0:.0f} $Hz$',
-            xy=(omega_0, np.max(magnitude)),
+ax.annotate(f'Resonant frequency {omega_0/2/np.pi:.0f} $Hz$',
+            xy=(omega_0/2/np.pi, np.max(magnitude)),
             xytext=(50, -20),
             textcoords='offset points',
             arrowprops=dict(facecolor='black', arrowstyle='->'))
@@ -58,7 +58,7 @@ ax.text(-0.01, 1.1, '(a)', transform=ax.transAxes,
         va='top', 
         ha='right')
 
-ax.grid()
+ax.grid(True, 'both')
 
 ax2 = fig.add_subplot(gs[2:, 0])
 
@@ -70,7 +70,7 @@ ax2.semilogx(f, angle, c='k', label='transfer function')
 ax2.set_xlabel('Frequency $f$ [$Hz$]')
 ax2.set_ylabel('Phase [$°$]')
 ax2.set_title('phase transfer function for high-pass filter')
-ax2.grid()
+ax2.grid(True, 'both')
 
 ax2.text(-0.01, 1.1, '(b)', transform=ax2.transAxes, 
          fontsize=16, 
@@ -92,5 +92,5 @@ ax3.text(0.1, 1, '(c)', transform=ax3.transAxes,
          va='top', 
          ha='right')
 
-fig.savefig('PE1/session_5/figures/LRC_resonator.pdf')
-fig.savefig('PE1/session_5/figures/LRC_resonator.png')
+fig.savefig('PE1/session_6/figures/resonator.pdf')
+fig.savefig('PE1/session_6/figures/resonator.png')
