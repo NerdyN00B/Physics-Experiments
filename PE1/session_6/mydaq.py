@@ -322,67 +322,13 @@ class MyDAQ():
             return np.stack((np.asarray(input_data),
                              np.asarray(output_data)))
 
-    # def white_noise_measure(self,
-    #                         frequencies,
-    #                         duration=10,
-    #                         amplitude=3,
-    #                         repeat=3,
-    #                         write_channel='ao0',
-    #                         read_input_channel='ai0',
-    #                         read_output_channel='ai1',
-    #                         ):
-    #     assert isinstance(repeat, int), "repeat must be integer"
-    #     assert repeat > 0, "repeat must be positive integer"
-    #     signal = np.zeros(duration*self.samplerate)
-    #     for frequency in frequencies:
-    #         waveform = self.generateWaveform('sine',
-    #                                          self.samplerate,
-    #                                          frequency,
-    #                                          amplitude,
-    #                                          duration=duration
-    #                                          )[1]
-    #         signal += waveform
-    #     signal /= np.max(signal)
-    #     signal *= amplitude
-    #     input_data = []
-    #     output_data = []
-    #     for i in range(repeat):
-    #         read = self.readWrite(signal,
-    #                               read_channel=[read_input_channel,
-    #                                             read_output_channel],
-    #                               write_channel=write_channel
-    #                               )
-    #         input_data.append(read[0])
-    #         output_data.append(read[1])
-    #     if repeat == 1:
-    #         return read
-    #     else:
-    #         return np.stack((input_data, output_data))
-        
-    # @staticmethod
-    # def get_whitenoise_spectrum(data, frequencies, repeat, samplerate=200_000,
-    #                             integration_range=1):
-    #     for i in range(repeat):
-    #         fourier_in = np.fft.fftfreq(data[0][i])
-    #         fourier_out = np.fft.fftfreq(data[1][i])
-    #         freq = np.fft.fftfreq(len(data[0][i]), 1/samplerate)
-    #         for frequency in frequencies:
-    #             idx = MyDAQ.find_nearest_idx(freq, frequency)
-    #             integrated_in = np.trapz(fourier_in[idx-integration_range:idx+integration_range],
-    #                                     freq[idx-integration_range:idx+integration_range])
-                
-    #             integrated_out = np.trapz(fourier_out[idx-integration_range:idx+integration_range],
-    #                                     freq[idx-integration_range:idx+integration_range])
-                
-    #             transfer 
-
     @staticmethod
     def get_transfer_functions(
         data: np.ndarray,
         frequencies,
         repeat: int = 1,
         samplerate: int = 200_000,
-        integration_range: int = 5,
+        integration_range: int = 0,
         ) -> np.ndarray:
         """Analyse the spectrum of a measured dataset.
         
