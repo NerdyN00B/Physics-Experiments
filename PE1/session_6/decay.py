@@ -33,9 +33,10 @@ savefile = filedialog.asksaveasfilename(filetypes=[('Numpy files', '.npy')],
 
 
 # Start of the measurement code
-daq = MyDAQ(200_000, 'myDAQ2')
+daq = MyDAQ(200_000, 'myDAQ3')
 
-signal = daq.generateWaveform('sine', daq.samplerate, frequency, 10)
+signal = daq.generateWaveform('sine', daq.samplerate, frequency, 10,
+                              duration=10)[1]
 
 daq.write(signal)
 data = daq.read(duration=duration)
@@ -44,17 +45,17 @@ data = daq.read(duration=duration)
 np.save(savefile, data)
 
 # Analyse data
-time = daq.getTimeArray(10, daq.samplerate)
+time = daq.getTimeArray(duration, daq.samplerate)
 
 fig, ax = plt.subplots(dpi=300, figsize=(16, 9))
 
-ax.scatter(time, data, '.k', label='full measurement')
+ax.scatter(time, data, c='k', label='full measurement')
 
 maxima = argrelmax(data, order=order)[0]
 maxima_time = time[maxima]
 maxima_data = data[maxima]
 
-ax.scatter(maxima_time, maxima_data, 'or', label='maxima')
+ax.scatter(maxima_time, maxima_data, c='r', label='maxima')
 
 popt, pcov = curve_fit(exponential_decay,
                        maxima_time, maxima_data,

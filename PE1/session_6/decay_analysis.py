@@ -29,28 +29,28 @@ root.withdraw()
 root = tk.Tk()
 root.withdraw()
 
-dir = os.getcwd() + '/PE1/session_5'
+dir = os.getcwd() + '/PE1/session_6'
 
 file_path = filedialog.askopenfilename(filetypes=[('Numpy files', '.npy')],
                                         initialdir=dir,
                                         title='Select data file',
                                         )
 
-data = np.load(file_path)
+data = np.load(file_path)[::213]
 
 
 # Analyse data
-time = MyDAQ.getTimeArray(10, samplerate)
+time = MyDAQ.getTimeArray(duration, samplerate)[::213]
 
 fig, ax = plt.subplots(dpi=300, figsize=(16, 9))
 
-ax.scatter(time, data, '.k', label='full measurement')
+ax.scatter(time, data, c='k', label='full measurement')
 
 maxima = argrelmax(data, order=order)[0]
 maxima_time = time[maxima]
 maxima_data = data[maxima]
 
-ax.scatter(maxima_time, maxima_data, 'or', label='maxima')
+ax.scatter(maxima_time, maxima_data, c='r', label='maxima')
 
 popt, pcov = curve_fit(exponential_decay,
                        maxima_time, maxima_data,
@@ -69,4 +69,4 @@ ax.set_ylabel('Voltage [V]')
 ax.grid()
 ax.legend()
 
-fig.savefig(file_path.replace('.npy', '.pdf'))
+fig.savefig(file_path.replace('.npy', '.png'))

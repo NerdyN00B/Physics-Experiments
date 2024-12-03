@@ -187,7 +187,8 @@ class MyDAQ():
             writeTask.stop()
             return np.asarray(read_data)
 
-    def read(self, duration: float, rate=None, channel='ai0') -> np.ndarray:
+    def read(self, duration: float, rate=None, channel='ai0',
+             timeout:float =300.) -> np.ndarray:
         """Reads data from the MyDAQ.
         
         parameters
@@ -198,6 +199,8 @@ class MyDAQ():
             The duration in seconds to read data for
         channel : str
             The channel to read from, default is 'ai0'
+        timeout : float
+            The timeout in seconds for the read operation. Default is 300.
         
         returns
         -------
@@ -214,7 +217,8 @@ class MyDAQ():
             self._addInputChannels(readTask, channel)
             self._configureChannelTimings(readTask, samps)
 
-            read_data = readTask.read(number_of_samples_per_channel = samps)
+            read_data = readTask.read(number_of_samples_per_channel = samps,
+                                      timeout=timeout)
             return np.asarray(read_data)
 
     def write(self, write_data, rate=None, samps=None, channel='ao0') -> None:
@@ -233,7 +237,7 @@ class MyDAQ():
         channel : str
             The channel to write to
         """
-        with dx.Task() as writeTask:
+        with dx.Task('writeTask') as writeTask:
             if rate is None:
                 rate = self.samplerate
                 assert rate is not None, "Samplerate should be set first."
@@ -463,11 +467,14 @@ class MyDAQ():
                   frequencies,
                   gain,
                   gain_error,
+                  nsigma=2,
                   fmt = 'ok',
                   capsize = 2,
-                  label = 'mean gain $\pm 2\sigma$',
+                  label = 'mean gain',
                   **kwargs) -> None:
         """Plot the gain of a system.
+        
+        note: f' \pm {nsigma}\sigma' is added to the label
         
         parameters
         ----------
@@ -482,7 +489,8 @@ class MyDAQ():
         **kwargs
             Additional keyword arguments for ax.errorbar function
         """
-        ax.errorbar(frequencies, gain, yerr=gain_error, fmt=fmt,
+        label += f' $\pm {nsigma}\sigma$'
+        ax.errorbar(frequencies, gain, yerr=nsigma * gain_error, fmt=fmt,
                     label=label, capsize=capsize, **kwargs)
         
         ax.set_xscale('log')
@@ -495,12 +503,15 @@ class MyDAQ():
                    frequencies,
                    phase,
                    phase_error,
+                   nsigma=2,
                    deg=True,
                    fmt = 'ok',
                    capsize = 2,
-                   label = 'mean phase $\pm 2\sigma$',
+                   label = 'mean phase',
                    **kwargs) -> None:
         """Plot the phase of a system.
+        
+        note: f' \pm {nsigma}\sigma' is added to the label
         
         parameters
         ----------
@@ -521,7 +532,9 @@ class MyDAQ():
             phase = np.rad2deg(phase)
             phase_error = np.rad2deg(phase_error)
         
-        ax.errorbar(frequencies, phase, yerr=phase_error, fmt=fmt,
+        label += f' $\pm {nsigma}\sigma$'
+        
+        ax.errorbar(frequencies, phase, yerr=nsigma*phase_error, fmt=fmt,
                     label=label, capsize=capsize, **kwargs)
         
         ax.set_xscale('log')
