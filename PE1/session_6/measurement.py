@@ -80,6 +80,7 @@ fitplot_freq = np.logspace(-0.5, 1, 1000)
 popt_gain, pcov_gain = curve_fit(gain_transfer,
                                  frequencies,
                                  mean_gain,
+                                 sigma=std_gain,
                                  p0=[0.8, 10],
                                  )
 
@@ -89,6 +90,7 @@ gainfit_label = f'Fit: $\omega_0$ = {popt_gain[0]:.2f} $\pm$ {gain_error[0]:.1e}
 popt_phase, pcov_phase = curve_fit(phase_transfer,
                                    frequencies,
                                    mean_phase,
+                                   sigma=std_phase,
                                    p0=[0.8, 10],
                                    )
 
